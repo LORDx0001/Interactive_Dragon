@@ -4,15 +4,130 @@ const screen = document.getElementById("screen");
 const xmlns = "http://www.w3.org/2000/svg";
 const xlinkns = "http://www.w3.org/1999/xlink";
 
+// Проверяем поддержку гироскопа
+let gyroSupported = false;
+let useGyroscope = false;
+
 const updatePointer = (e) => {
-	pointer.x = e.clientX || (e.touches && e.touches[0].clientX);
-	pointer.y = e.clientY || (e.touches && e.touches[0].clientY);
-	rad = 0;
+	if (!useGyroscope) {
+		pointer.x = e.clientX || (e.touches && e.touches[0].clientX);
+		pointer.y = e.clientY || (e.touches && e.touches[0].clientY);
+		rad = 0;
+	}
+};
+
+// Обработчик гироскопа
+const handleOrientation = (event) => {
+	if (useGyroscope) {
+		// gamma: наклон влево-вправо (-90 до 90)
+		// beta: наклон вперед-назад (-180 до 180)
+		const gamma = event.gamma; // лево-право
+		const beta = event.beta;   // вперед-назад
+		
+		// Преобразуем углы в координаты экрана
+		// gamma: -90 (лево) до 90 (право) -> 0 до width
+		// beta: -45 (вверх) до 45 (вниз) -> 0 до height
+		pointer.x = Math.max(0, Math.min(width, (gamma + 90) * width / 180));
+		pointer.y = Math.max(0, Math.min(height, (beta + 45) * height / 90));
+		
+		rad = 0;
+	}
+};
+
+// Проверяем поддержку гироскопа
+const checkGyroSupport = () => {
+	if (window.DeviceOrientationEvent) {
+		gyroSupported = true;
+		console.log("Гироскоп поддерживается!");
+		
+		// Для iOS 13+ нужно запросить разрешение
+		if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+			DeviceOrientationEvent.requestPermission()
+				.then(response => {
+					if (response == 'granted') {
+						useGyroscope = true;
+						window.addEventListener('deviceorientation', handleOrientation, false);
+						console.log("Гироскоп активирован!");
+					}
+				})
+				.catch(console.error);
+		} else {
+			// Для Android и старых iOS
+			useGyroscope = true;
+			window.addEventListener('deviceorientation', handleOrientation, false);
+			console.log("Гироскоп активирован!");
+		}
+	}
+};
+
+// Добавляем кнопку для включения гироскопа
+const createGyroButton = () => {
+	if (gyroSupported) {
+		const button = document.createElement('button');
+		button.className = 'gyro-button';
+		button.textContent = useGyroscope ? 'Выключить гироскоп' : 'Включить гироскоп';
+		
+		// Создаем индикатор состояния
+		const indicator = document.createElement('div');
+		indicator.className = 'gyro-indicator';
+		indicator.textContent = 'Гироскоп: выключен';
+		
+		button.onclick = () => {
+			useGyroscope = !useGyroscope;
+			button.textContent = useGyroscope ? 'Выключить гироскоп' : 'Включить гироскоп';
+			
+			if (useGyroscope) {
+				// Для iOS 13+ запрашиваем разрешение при клике
+				if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+					DeviceOrientationEvent.requestPermission()
+						.then(response => {
+							if (response == 'granted') {
+								window.addEventListener('deviceorientation', handleOrientation, false);
+								indicator.textContent = 'Гироскоп: включен';
+								indicator.style.color = '#09ff00';
+								console.log("Гироскоп включен!");
+							} else {
+								useGyroscope = false;
+								button.textContent = 'Включить гироскоп';
+								indicator.textContent = 'Гироскоп: отказано';
+								indicator.style.color = '#ff4444';
+							}
+						})
+						.catch(err => {
+							console.error(err);
+							useGyroscope = false;
+							button.textContent = 'Включить гироскоп';
+							indicator.textContent = 'Гироскоп: ошибка';
+							indicator.style.color = '#ff4444';
+						});
+				} else {
+					window.addEventListener('deviceorientation', handleOrientation, false);
+					indicator.textContent = 'Гироскоп: включен';
+					indicator.style.color = '#09ff00';
+					console.log("Гироскоп включен!");
+				}
+			} else {
+				window.removeEventListener('deviceorientation', handleOrientation, false);
+				indicator.textContent = 'Гироскоп: выключен';
+				indicator.style.color = '#666';
+				console.log("Гироскоп выключен!");
+			}
+		};
+		
+		document.body.appendChild(button);
+		document.body.appendChild(indicator);
+	}
 };
 
 window.addEventListener("pointermove", updatePointer, false);
 window.addEventListener("touchmove", updatePointer, false);
 window.addEventListener("mousemove", updatePointer, false);
+
+// Инициализируем гироскоп после загрузки страницы
+window.addEventListener('load', () => {
+	checkGyroSupport();
+	createGyroButton();
+});
 
 const resize = () => {
 	width = window.innerWidth;
