@@ -262,9 +262,11 @@ const run = () => {
     // Определяем масштаб для мобильных/планшетов
 	let scaleFactor = 1;
 	if (window.innerWidth < 500 || window.innerHeight < 500) {
-		scaleFactor = 0.55; // очень маленький для телефонов
+		scaleFactor = 0.28; // ещё меньше для телефонов
 	} else if (window.innerWidth < 900 || window.innerHeight < 900) {
 		scaleFactor = 0.38; // ещё меньше для планшетов
+	} else {
+		scaleFactor = 0.7; // уменьшить и на десктопе
 	}
     e.x = Math.max(margin, Math.min(width - margin, e.x));
     e.y = Math.max(margin, Math.min(height - margin, e.y));
