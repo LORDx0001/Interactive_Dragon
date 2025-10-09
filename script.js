@@ -11,23 +11,40 @@ let useGyroscope = false;
 // Добавляем отладочную информацию
 const addDebugInfo = () => {
 	const debug = document.createElement('div');
+	debug.id = 'debug-panel';
 	debug.style.position = 'fixed';
-	debug.style.top = '10px';
+	debug.style.bottom = '10px';
 	debug.style.left = '10px';
 	debug.style.zIndex = '2000';
-	debug.style.background = 'rgba(0,0,0,0.8)';
+	debug.style.background = 'rgba(0,0,0,0.9)';
 	debug.style.color = '#09ff00';
-	debug.style.padding = '10px';
-	debug.style.fontSize = '12px';
+	debug.style.padding = '8px';
+	debug.style.fontSize = '10px';
 	debug.style.fontFamily = 'monospace';
 	debug.style.borderRadius = '5px';
+	debug.style.maxWidth = '250px';
+	debug.style.border = '1px solid #09ff00';
+	debug.style.cursor = 'pointer';
 	debug.innerHTML = `
-		<div>Браузер: ${navigator.userAgent.substring(0, 50)}...</div>
-		<div>DeviceOrientationEvent: ${!!window.DeviceOrientationEvent}</div>
-		<div>RequestPermission: ${!!DeviceOrientationEvent.requestPermission}</div>
-		<div>Гироскоп: <span id="gyro-status">проверяется...</span></div>
-		<div>X: <span id="gyro-x">0</span>, Y: <span id="gyro-y">0</span></div>
+		<div style="font-weight: bold; margin-bottom: 5px;">🐉 Debug Info (tap to toggle)</div>
+		<div id="debug-content" style="display: none;">
+			<div>Gyro: <span id="gyro-status">проверяется...</span></div>
+			<div>X: <span id="gyro-x">0</span>, Y: <span id="gyro-y">0</span></div>
+			<div>Browser: ${navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop'}</div>
+			<div>DeviceOrientation: ${!!window.DeviceOrientationEvent ? '✓' : '✗'}</div>
+		</div>
 	`;
+	
+	// Добавляем возможность свернуть/развернуть панель
+	debug.onclick = () => {
+		const content = document.getElementById('debug-content');
+		if (content.style.display === 'none') {
+			content.style.display = 'block';
+		} else {
+			content.style.display = 'none';
+		}
+	};
+	
 	document.body.appendChild(debug);
 	return debug;
 };
@@ -48,9 +65,19 @@ const handleOrientation = (event) => {
 		const gamma = event.gamma || 0; // лево-право
 		const beta = event.beta || 0;   // вперед-назад
 		
-		// Преобразуем углы в координаты экрана
-		pointer.x = Math.max(0, Math.min(width, (gamma + 90) * width / 180));
-		pointer.y = Math.max(0, Math.min(height, (beta + 45) * height / 90));
+		// Увеличиваем чувствительность и диапазон
+		// Используем более широкий диапазон и усиление
+		const sensitivity = 2.5; // Коэффициент усиления
+		const gammaRange = 60;    // Диапазон gamma (вместо 90)
+		const betaRange = 30;     // Диапазон beta (вместо 45)
+		
+		// Преобразуем углы в координаты экрана с усилением
+		let x = (gamma + gammaRange) * width / (gammaRange * 2);
+		let y = (beta + betaRange) * height / (betaRange * 2);
+		
+		// Применяем усиление и ограничиваем координаты
+		pointer.x = Math.max(0, Math.min(width, x * sensitivity - (width * (sensitivity - 1)) / 2));
+		pointer.y = Math.max(0, Math.min(height, y * sensitivity - (height * (sensitivity - 1)) / 2));
 		
 		// Обновляем отладочную информацию
 		const gyroX = document.getElementById('gyro-x');
@@ -82,19 +109,30 @@ const checkGyroSupport = () => {
 const createSimpleGyroButton = () => {
 	// Создаем кнопку в любом случае для тестирования
 	const button = document.createElement('button');
-	button.textContent = 'Тест гироскопа';
+	button.textContent = 'Гироскоп';
 	button.style.position = 'fixed';
-	button.style.top = '20px';
-	button.style.right = '20px';
+	button.style.top = '15px';
+	button.style.right = '15px';
 	button.style.zIndex = '1000';
-	button.style.padding = '15px 20px';
+	button.style.padding = '12px 16px';
 	button.style.backgroundColor = '#09ff00';
 	button.style.color = '#000';
-	button.style.border = 'none';
+	button.style.border = '2px solid #09ff00';
 	button.style.borderRadius = '8px';
 	button.style.cursor = 'pointer';
-	button.style.fontSize = '16px';
+	button.style.fontSize = '14px';
 	button.style.fontWeight = 'bold';
+	button.style.boxShadow = '0 4px 8px rgba(9, 255, 0, 0.3)';
+	button.style.transition = 'all 0.3s ease';
+	button.style.userSelect = 'none';
+	
+	// Адаптация для мобильных устройств
+	if (window.innerWidth < 500) {
+		button.style.fontSize = '12px';
+		button.style.padding = '10px 14px';
+		button.style.top = '10px';
+		button.style.right = '10px';
+	}
 	
 	button.onclick = () => {
 		console.log("Кнопка нажата!");
@@ -105,7 +143,8 @@ const createSimpleGyroButton = () => {
 		}
 		
 		useGyroscope = !useGyroscope;
-		button.textContent = useGyroscope ? 'Выключить гироскоп' : 'Включить гироскоп';
+		button.textContent = useGyroscope ? 'Выкл' : 'Гироскоп';
+		button.style.backgroundColor = useGyroscope ? '#ff4444' : '#09ff00';
 		
 		if (useGyroscope) {
 			// Для iOS 13+ запрашиваем разрешение
@@ -117,17 +156,20 @@ const createSimpleGyroButton = () => {
 						if (response == 'granted') {
 							window.addEventListener('deviceorientation', handleOrientation, false);
 							console.log("Гироскоп включен (iOS)!");
-							alert('Гироскоп включен! Наклоняйте устройство.');
+							button.textContent = 'Выкл';
+							button.style.backgroundColor = '#ff4444';
 						} else {
 							useGyroscope = false;
-							button.textContent = 'Включить гироскоп';
+							button.textContent = 'Гироскоп';
+							button.style.backgroundColor = '#09ff00';
 							alert('Разрешение отклонено');
 						}
 					})
 					.catch(err => {
 						console.error("Ошибка iOS:", err);
 						useGyroscope = false;
-						button.textContent = 'Включить гироскоп';
+						button.textContent = 'Гироскоп';
+						button.style.backgroundColor = '#09ff00';
 						alert('Ошибка: ' + err.message);
 					});
 			} else {
@@ -135,11 +177,14 @@ const createSimpleGyroButton = () => {
 				console.log("Включаем гироскоп для Android...");
 				window.addEventListener('deviceorientation', handleOrientation, false);
 				console.log("Гироскоп включен (Android)!");
-				alert('Гироскоп включен! Наклоняйте устройство.');
+				button.textContent = 'Выкл';
+				button.style.backgroundColor = '#ff4444';
 			}
 		} else {
 			window.removeEventListener('deviceorientation', handleOrientation, false);
 			console.log("Гироскоп выключен!");
+			button.textContent = 'Гироскоп';
+			button.style.backgroundColor = '#09ff00';
 		}
 	};
 	
