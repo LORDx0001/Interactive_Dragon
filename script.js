@@ -4,15 +4,15 @@ const screen = document.getElementById("screen");
 const xmlns = "http://www.w3.org/2000/svg";
 const xlinkns = "http://www.w3.org/1999/xlink";
 
-window.addEventListener(
-	"pointermove",
-	(e) => {
-		pointer.x = e.clientX;
-		pointer.y = e.clientY;
-		rad = 0;
-	},
-	false
-);
+const updatePointer = (e) => {
+	pointer.x = e.clientX || (e.touches && e.touches[0].clientX);
+	pointer.y = e.clientY || (e.touches && e.touches[0].clientY);
+	rad = 0;
+};
+
+window.addEventListener("pointermove", updatePointer, false);
+window.addEventListener("touchmove", updatePointer, false);
+window.addEventListener("mousemove", updatePointer, false);
 
 const resize = () => {
 	width = window.innerWidth;
