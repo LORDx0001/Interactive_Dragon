@@ -51,8 +51,11 @@ const addDebugInfo = () => {
 
 const updatePointer = (e) => {
 	if (!useGyroscope) {
-		pointer.x = e.clientX || (e.touches && e.touches[0].clientX);
-		pointer.y = e.clientY || (e.touches && e.touches[0].clientY);
+		let newX = e.clientX || (e.touches && e.touches[0].clientX);
+		let newY = e.clientY || (e.touches && e.touches[0].clientY);
+		const margin = 50;
+		pointer.x = Math.max(margin, Math.min(width - margin, newX));
+		pointer.y = Math.max(margin, Math.min(height - margin, newY));
 		rad = 0;
 	}
 };
@@ -250,6 +253,10 @@ const run = () => {
 	const ay = (Math.sin(4 * frm) * rad * height) / width;
 	e.x += (ax + pointer.x - e.x) / 10;
 	e.y += (ay + pointer.y - e.y) / 10;
+	// Ограничиваем голову дракона в пределах экрана с тем же отступом
+	const margin = 50;
+	e.x = Math.max(margin, Math.min(width - margin, e.x));
+	e.y = Math.max(margin, Math.min(height - margin, e.y));
 	for (let i = 1; i < N; i++) {
 		let e = elems[i];
 		let ep = elems[i - 1];
