@@ -244,9 +244,9 @@ for (let i = 1; i < N; i++) {
 	if (i === 1) prepend("Cabeza", i);
 	else if (i === 8 || i === 14) prepend("Aletas", i);
 	else prepend("Espina", i);
-	// Сделать сегмент ярко-неоновым
+	// Обычный зелёный stroke (без неона)
 	if (elems[i] && elems[i].use) {
-		elems[i].use.setAttribute("style", "filter: drop-shadow(0 0 16px #39ff14); stroke: #39ff14; fill: none;");
+		elems[i].use.setAttribute("style", "stroke: #09ff00; fill: none;");
 	}
 }
 
