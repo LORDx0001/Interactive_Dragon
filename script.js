@@ -255,22 +255,25 @@ const run = () => {
 	e.y += (ay + pointer.y - e.y) / 10;
 	// Ограничиваем голову дракона в пределах экрана с тем же отступом
 	const margin = 50;
-	e.x = Math.max(margin, Math.min(width - margin, e.x));
-	e.y = Math.max(margin, Math.min(height - margin, e.y));
-	for (let i = 1; i < N; i++) {
-		let e = elems[i];
-		let ep = elems[i - 1];
-		const a = Math.atan2(e.y - ep.y, e.x - ep.x);
-		e.x += (ep.x - e.x + (Math.cos(a) * (100 - i)) / 5) / 4;
-		e.y += (ep.y - e.y + (Math.sin(a) * (100 - i)) / 5) / 4;
-		const s = (162 + 4 * (1 - i)) / 50;
-		e.use.setAttributeNS(
-			null,
-			"transform",
-			`translate(${(ep.x + e.x) / 2},${(ep.y + e.y) / 2}) rotate(${
-				(180 / Math.PI) * a
-			}) translate(${0},${0}) scale(${s},${s})`
-		);
+    // Определяем масштаб для мобильных/планшетов
+    let scaleFactor = 1;
+    if (window.innerWidth < 700 || window.innerHeight < 700) {
+        scaleFactor = 0.55;
+    }
+    e.x = Math.max(margin, Math.min(width - margin, e.x));
+    e.y = Math.max(margin, Math.min(height - margin, e.y));
+    for (let i = 1; i < N; i++) {
+        let e = elems[i];
+        let ep = elems[i - 1];
+        const a = Math.atan2(e.y - ep.y, e.x - ep.x);
+        e.x += (ep.x - e.x + (Math.cos(a) * (100 - i)) / 5) / 4;
+        e.y += (ep.y - e.y + (Math.sin(a) * (100 - i)) / 5) / 4;
+        const s = ((162 + 4 * (1 - i)) / 50) * scaleFactor;
+        e.use.setAttributeNS(
+            null,
+            "transform",
+            `translate(${(ep.x + e.x) / 2},${(ep.y + e.y) / 2}) rotate(${(180 / Math.PI) * a}) translate(${0},${0}) scale(${s},${s})`
+        );
 	}
 	if (rad < radm) rad++;
 	frm += 0.003;
