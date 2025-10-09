@@ -244,6 +244,10 @@ for (let i = 1; i < N; i++) {
 	if (i === 1) prepend("Cabeza", i);
 	else if (i === 8 || i === 14) prepend("Aletas", i);
 	else prepend("Espina", i);
+	// Сделать сегмент ярко-неоновым
+	if (elems[i] && elems[i].use) {
+		elems[i].use.setAttribute("style", "filter: drop-shadow(0 0 16px #39ff14); stroke: #39ff14; fill: none;");
+	}
 }
 
 const run = () => {
@@ -256,10 +260,12 @@ const run = () => {
 	// Ограничиваем голову дракона в пределах экрана с тем же отступом
 	const margin = 50;
     // Определяем масштаб для мобильных/планшетов
-    let scaleFactor = 1;
-    if (window.innerWidth < 700 || window.innerHeight < 700) {
-        scaleFactor = 0.55;
-    }
+	let scaleFactor = 1;
+	if (window.innerWidth < 500 || window.innerHeight < 500) {
+		scaleFactor = 0.55; // очень маленький для телефонов
+	} else if (window.innerWidth < 900 || window.innerHeight < 900) {
+		scaleFactor = 0.38; // ещё меньше для планшетов
+	}
     e.x = Math.max(margin, Math.min(width - margin, e.x));
     e.y = Math.max(margin, Math.min(height - margin, e.y));
     for (let i = 1; i < N; i++) {
