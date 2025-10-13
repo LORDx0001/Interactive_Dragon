@@ -23,7 +23,7 @@ while (screen.firstChild) screen.removeChild(screen.firstChild);
 // --- Определяем режим ---
 const isMobileOrTablet = () => window.innerWidth < 900 || window.innerHeight < 900;
 
-// --- Мобильный/Планшет: 1 дракон с гироскопом/тачем ---
+// --- Мобильный/Планшет: 1 дракон с гироскопом/тачем и автополётом ---
 if (isMobileOrTablet()) {
     // Один зелёный дракон
     const elems = [];
@@ -41,6 +41,8 @@ if (isMobileOrTablet()) {
 
     let pointer = { x: width / 2, y: height / 2 };
     let useGyro = false;
+    let lastUserMove = Date.now();
+    let autoFlightPhase = Math.random() * Math.PI * 2;
 
     // Кнопка для включения гироскопа
     const button = document.createElement('button');
@@ -86,25 +88,40 @@ if (isMobileOrTablet()) {
         }
     };
 
-    // Гироскоп
+    // Гироскоп (высокая чувствительность)
     window.addEventListener("deviceorientation", (e) => {
         if (useGyro && e.gamma !== null && e.beta !== null) {
-            pointer.x = width / 2 + e.gamma * (width / 90) * 0.4;
-            pointer.y = height / 2 + e.beta * (height / 90) * 0.4;
+            pointer.x = width / 2 + e.gamma * (width / 30);
+            pointer.y = height / 2 + e.beta * (height / 30);
         }
     });
 
     // Тач/мышь
     window.addEventListener("pointermove", (e) => {
-        if (!useGyro) {
+        if (!useGyro && e.clientX && e.clientY) {
             pointer.x = e.clientX;
             pointer.y = e.clientY;
+            lastUserMove = Date.now();
+        }
+    });
+    window.addEventListener("touchmove", (e) => {
+        if (!useGyro && e.touches && e.touches.length > 0) {
+            pointer.x = e.touches[0].clientX;
+            pointer.y = e.touches[0].clientY;
+            lastUserMove = Date.now();
         }
     });
 
     // Анимация
     const run = () => {
         requestAnimationFrame(run);
+
+        // Автополёт если нет пользовательского ввода и гироскопа
+        if (!useGyro && Date.now() - lastUserMove > 2000) {
+            autoFlightPhase += 0.018;
+            pointer.x = width / 2 + Math.cos(autoFlightPhase) * (width * 0.28);
+            pointer.y = height / 2 + Math.sin(autoFlightPhase * 1.2) * (height * 0.18);
+        }
 
         elems[0].x += (pointer.x - elems[0].x) * 0.12;
         elems[0].y += (pointer.y - elems[0].y) * 0.12;
