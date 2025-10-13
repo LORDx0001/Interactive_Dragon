@@ -4,20 +4,45 @@ const screen = document.getElementById("screen");
 const xmlns = "http://www.w3.org/2000/svg";
 const xlinkns = "http://www.w3.org/1999/xlink";
 
-// Гироскоп и кнопка
-let gyroSupported = false;
-let useGyroscope = false;
+// --- Универсальные параметры ---
+const N = 24;
+const dragonColors = ['#09ff00', '#ff2222', '#2299ff', '#ffbb00', '#bb00ff'];
 
-const checkGyroSupport = () => {
-    if (window.DeviceOrientationEvent) {
-        gyroSupported = true;
-        return true;
-    } else {
-        return false;
-    }
+// --- Размеры ---
+let width, height;
+const resize = () => {
+    width = window.innerWidth;
+    height = window.innerHeight;
 };
+window.addEventListener("resize", () => resize(), false);
+resize();
 
-const createSimpleGyroButton = () => {
+// --- Очищаем экран ---
+while (screen.firstChild) screen.removeChild(screen.firstChild);
+
+// --- Определяем режим ---
+const isMobileOrTablet = () => window.innerWidth < 900 || window.innerHeight < 900;
+
+// --- Мобильный/Планшет: 1 дракон с гироскопом/тачем ---
+if (isMobileOrTablet()) {
+    // Один зелёный дракон
+    const elems = [];
+    for (let i = 0; i < N; i++) elems[i] = { use: null, x: width / 2, y: height / 2 };
+    for (let i = 1; i < N; i++) {
+        let useType = "Espina";
+        if (i === 1) useType = "Cabeza";
+        else if (i === 8 || i === 14) useType = "Aletas";
+        const elem = document.createElementNS(xmlns, "use");
+        elems[i].use = elem;
+        elem.setAttributeNS(xlinkns, "xlink:href", "#" + useType);
+        elem.setAttribute("style", `stroke: #09ff00; fill: none;`);
+        screen.prepend(elem);
+    }
+
+    let pointer = { x: width / 2, y: height / 2 };
+    let useGyro = false;
+
+    // Кнопка для включения гироскопа
     const button = document.createElement('button');
     button.textContent = 'Гироскоп';
     button.style.position = 'fixed';
@@ -41,66 +66,37 @@ const createSimpleGyroButton = () => {
         button.style.top = '10px';
         button.style.right = '10px';
     }
-    button.onclick = () => {
-        alert('Гироскоп не используется для этих драконов!');
-    };
     document.body.appendChild(button);
-};
 
-let width, height;
-const resize = () => {
-    width = window.innerWidth;
-    height = window.innerHeight;
-};
-window.addEventListener("resize", () => resize(), false);
-resize();
-
-// --- Определяем режим ---
-const isMobileOrTablet = () => window.innerWidth < 900 || window.innerHeight < 900;
-
-// --- Универсальные параметры ---
-const N = 24;
-const dragonColors = ['#09ff00', '#ff2222', '#2299ff', '#ffbb00', '#bb00ff'];
-
-// --- Очищаем экран ---
-while (screen.firstChild) screen.removeChild(screen.firstChild);
-
-// --- Мобильный/Планшет: 1 дракон с гироскопом/тачем ---
-if (isMobileOrTablet()) {
-    checkGyroSupport();
-    createSimpleGyroButton();
-
-    // Один зелёный дракон
-    const elems = [];
-    for (let i = 0; i < N; i++) elems[i] = { use: null, x: width / 2, y: height / 2 };
-    // Создаём use-элементы
-    for (let i = 1; i < N; i++) {
-        let useType = "Espina";
-        if (i === 1) useType = "Cabeza";
-        else if (i === 8 || i === 14) useType = "Aletas";
-        const elem = document.createElementNS(xmlns, "use");
-        elems[i].use = elem;
-        elem.setAttributeNS(xlinkns, "xlink:href", "#" + useType);
-        elem.setAttribute("style", `stroke: #09ff00; fill: none;`);
-        screen.prepend(elem);
-    }
-
-    // Управление
-    let pointer = { x: width / 2, y: height / 2 };
-    let rad = 0;
+    // Включение гироскопа по нажатию
+    button.onclick = async () => {
+        if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
+            try {
+                const response = await DeviceOrientationEvent.requestPermission();
+                if (response === "granted") {
+                    useGyro = true;
+                    button.style.display = "none";
+                }
+            } catch (e) {
+                alert("Гироскоп не разрешён");
+            }
+        } else {
+            useGyro = true;
+            button.style.display = "none";
+        }
+    };
 
     // Гироскоп
-    if (gyroSupported) {
-        window.addEventListener("deviceorientation", (e) => {
-            if (e.gamma !== null && e.beta !== null) {
-                pointer.x = width / 2 + e.gamma * (width / 90) * 0.4;
-                pointer.y = height / 2 + e.beta * (height / 90) * 0.4;
-            }
-        });
-    }
+    window.addEventListener("deviceorientation", (e) => {
+        if (useGyro && e.gamma !== null && e.beta !== null) {
+            pointer.x = width / 2 + e.gamma * (width / 90) * 0.4;
+            pointer.y = height / 2 + e.beta * (height / 90) * 0.4;
+        }
+    });
+
     // Тач/мышь
     window.addEventListener("pointermove", (e) => {
-        if (!gyroSupported) {
+        if (!useGyro) {
             pointer.x = e.clientX;
             pointer.y = e.clientY;
         }
@@ -110,16 +106,13 @@ if (isMobileOrTablet()) {
     const run = () => {
         requestAnimationFrame(run);
 
-        // Голова к pointer
         elems[0].x += (pointer.x - elems[0].x) * 0.12;
         elems[0].y += (pointer.y - elems[0].y) * 0.12;
 
-        // Ограничения
         const margin = 30;
         elems[0].x = Math.max(margin, Math.min(width - margin, elems[0].x));
         elems[0].y = Math.max(margin, Math.min(height - margin, elems[0].y));
 
-        // Тело
         for (let i = 1; i < N; i++) {
             let e = elems[i];
             let ep = elems[i - 1];
@@ -140,7 +133,6 @@ if (isMobileOrTablet()) {
 
 // --- Десктоп: 5 волнистых драконов ---
 else {
-    // 5 разноцветных драконов
     const dragons = [];
     for (let d = 0; d < 5; d++) {
         const elems = [];
@@ -159,7 +151,6 @@ else {
             angle: Math.random() * Math.PI * 2
         });
     }
-    // use-элементы
     for (let d = 0; d < 5; d++) {
         for (let i = 1; i < N; i++) {
             let useType = "Espina";
@@ -173,7 +164,6 @@ else {
         }
     }
 
-    // Анимация
     const run = () => {
         requestAnimationFrame(run);
 
