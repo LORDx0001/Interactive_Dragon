@@ -5,7 +5,7 @@ const xmlns = "http://www.w3.org/2000/svg";
 const xlinkns = "http://www.w3.org/1999/xlink";
 
 // --- Универсальные параметры ---
-const N = 14; // Оптимизация: уменьшено количество сегментов
+const N = 24;
 const dragonColors = ['#09ff00', '#ff2222', '#2299ff', '#ffbb00', '#bb00ff'];
 
 // --- Размеры ---
@@ -23,19 +23,17 @@ while (screen.firstChild) screen.removeChild(screen.firstChild);
 // --- Определяем режим ---
 const isMobileOrTablet = () => window.innerWidth < 900 || window.innerHeight < 900;
 
-// --- Мобильный/Планшет: 1 дракон с гироскопом/тачем и автополётом ---
 if (isMobileOrTablet()) {
-    // Один зелёный дракон
     const elems = [];
     for (let i = 0; i < N; i++) elems[i] = { use: null, x: width / 2, y: height / 2 };
     for (let i = 1; i < N; i++) {
         let useType = "Espina";
         if (i === 1) useType = "Cabeza";
-        else if (i === 8 || i === 12) useType = "Aletas";
+        else if (i === 8 || i === 14) useType = "Aletas";
         const elem = document.createElementNS(xmlns, "use");
         elems[i].use = elem;
         elem.setAttributeNS(xlinkns, "xlink:href", "#" + useType);
-        elem.setAttribute("style", `stroke: #09ff00; fill: none;`);
+        elem.setAttribute("style", `stroke: #ff2222; fill: none;`); // был #09ff00, стал #ff2222
         screen.prepend(elem);
     }
 
@@ -116,14 +114,9 @@ if (isMobileOrTablet()) {
         }
     });
 
-    // Оптимизация FPS
-    let lastFrame = 0;
-    const FPS = 30;
-
-    const run = (now) => {
+    // Анимация
+    const run = () => {
         requestAnimationFrame(run);
-        if (now - lastFrame < 1000 / FPS) return;
-        lastFrame = now;
 
         // Автополёт если нет пользовательского ввода и гироскопа (через 1 сек)
         if (!useGyro && Date.now() - lastUserMove > 1000) {
@@ -154,10 +147,10 @@ if (isMobileOrTablet()) {
             );
         }
     };
-    requestAnimationFrame(run);
+    run();
 }
 
-// --- Десктоп: 5 волнистых драконов с оптимизацией и сердцем ---
+// --- Десктоп: 5 волнистых драконов ---
 else {
     const dragons = [];
     for (let d = 0; d < 5; d++) {
@@ -174,24 +167,14 @@ else {
             },
             speed: 2 + Math.random() * 2,
             wavePhase: Math.random() * Math.PI * 2,
-            angle: Math.random() * Math.PI * 2,
-            isHeart: false,
-            heartSide: null,
-            prevColor: dragonColors[d],
-            prevTarget: null,
-            prevSpeed: null,
-            prevAngle: null,
-            prevWavePhase: null,
-            heartPhase: 0,
-            heartProgress: 0,
-            heartPhaseStart: 0
+            angle: Math.random() * Math.PI * 2
         });
     }
     for (let d = 0; d < 5; d++) {
         for (let i = 1; i < N; i++) {
             let useType = "Espina";
             if (i === 1) useType = "Cabeza";
-            else if (i === 8 || i === 12) useType = "Aletas";
+            else if (i === 8 || i === 14) useType = "Aletas";
             const elem = document.createElementNS(xmlns, "use");
             dragons[d].elems[i].use = elem;
             elem.setAttributeNS(xlinkns, "xlink:href", "#" + useType);
@@ -200,176 +183,34 @@ else {
         }
     }
 
-    let heartActive = false;
-    let heartDragons = [];
-    let heartReady = false;
-
-    function pickTwoRandomDragons() {
-        let idx = [0, 1, 2, 3, 4];
-        let a = idx.splice(Math.floor(Math.random() * idx.length), 1)[0];
-        let b = idx.splice(Math.floor(Math.random() * idx.length), 1)[0];
-        return [a, b];
-    }
-
-    function setHeartState(active) {
-        heartActive = active;
-        heartReady = false;
-        for (let i = 0; i < 5; i++) {
-            if (dragons[i].isHeart) {
-                dragons[i].isHeart = false;
-                dragons[i].heartSide = null;
-                dragons[i].color = dragons[i].prevColor;
-                dragons[i].target = dragons[i].prevTarget;
-                dragons[i].speed = dragons[i].prevSpeed;
-                dragons[i].angle = dragons[i].prevAngle;
-                dragons[i].wavePhase = dragons[i].prevWavePhase;
-                dragons[i].heartPhase = 0;
-                dragons[i].heartProgress = 0;
-                for (let j = 1; j < N; j++) {
-                    dragons[i].elems[j].use.setAttribute("style", `stroke: ${dragons[i].color}; fill: none;`);
-                }
-            }
-        }
-    }
-
-    function startHeartEvent() {
-        setHeartState(false);
-        heartDragons = pickTwoRandomDragons();
-        const [a, b] = heartDragons;
-        const centerX = width / 2;
-        const centerY = height / 2;
-        [a, b].forEach((idx, i) => {
-            let d = dragons[idx];
-            d.prevColor = d.color;
-            d.prevTarget = d.target;
-            d.prevSpeed = d.speed;
-            d.prevAngle = d.angle;
-            d.prevWavePhase = d.wavePhase;
-            d.isHeart = true;
-            d.heartSide = i === 0 ? "left" : "right";
-            d.color = "#ff2222";
-            d.target = { x: centerX + (i === 0 ? -90 : 90), y: centerY };
-            d.speed = 6;
-            d.heartPhase = 1;
-            d.heartProgress = 0;
-            d.heartPhaseStart = 0;
-            for (let j = 1; j < N; j++) {
-                d.elems[j].use.setAttribute("style", `stroke: #ff2222; fill: none;`);
-            }
-        });
-        heartActive = true;
-        heartReady = false;
-    }
-
-    setInterval(() => {
-        startHeartEvent();
-    }, 10000);
-
-    setTimeout(() => {
-        startHeartEvent();
-    }, 10000);
-
-    // Оптимизация FPS
     let lastFrame = 0;
-    const FPS = 30;
+    const FPS = 9999;
 
     const run = (now) => {
         requestAnimationFrame(run);
         if (now - lastFrame < 1000 / FPS) return;
         lastFrame = now;
 
-        // Проверяем, обе ли половинки прилетели к центру
-        if (heartDragons.length === 2) {
-            const [a, b] = heartDragons;
-            const left = dragons[a];
-            const right = dragons[b];
-            const leftTarget = { x: width / 2 - 90, y: height / 2 };
-            const rightTarget = { x: width / 2 + 90, y: height / 2 };
-            heartReady =
-                left.isHeart && right.isHeart &&
-                Math.abs(left.elems[0].x - leftTarget.x) < 2 &&
-                Math.abs(left.elems[0].y - leftTarget.y) < 2 &&
-                Math.abs(right.elems[0].x - rightTarget.x) < 2 &&
-                Math.abs(right.elems[0].y - rightTarget.y) < 2;
-        } else {
-            heartReady = false;
-        }
-
         for (let d = 0; d < 5; d++) {
             let dragon = dragons[d];
             let e = dragon.elems[0];
 
-            // --- Сердечко с фазами ---
-            if (dragon.isHeart) {
-                const centerX = width / 2 + (dragon.heartSide === "left" ? -90 : 90);
-                const centerY = height / 2;
-
-                if (dragon.heartPhase === 1) {
-                    // Летит к центру
-                    e.x += (centerX - e.x) * 0.18;
-                    e.y += (centerY - e.y) * 0.18;
-                    if (heartReady) {
-                        dragon.heartPhase = 2;
-                        dragon.heartProgress = 0;
-                    }
-                } else if (dragon.heartPhase === 2) {
-                    // Плавно формирует половину сердца
-                    dragon.heartProgress += 0.035;
-                    if (dragon.heartProgress >= 1) {
-                        dragon.heartProgress = 1;
-                        dragon.heartPhase = 3;
-                        dragon.heartPhaseStart = Date.now();
-                    }
-                } else if (dragon.heartPhase === 3) {
-                    // Стоит 5 секунд
-                    if (Date.now() - dragon.heartPhaseStart > 5000) {
-                        dragon.heartPhase = 4;
-                    }
-                } else if (dragon.heartPhase === 4) {
-                    setHeartState(false);
-                    continue;
-                }
-
-                // Формируем тело в виде половины сердечка (анимируем t)
-                let progress = (dragon.heartPhase === 2 || dragon.heartPhase === 3) ? dragon.heartProgress : 0;
-                for (let i = 1; i < N; i++) {
-                    let t = (i / (N - 1)) * progress;
-                    let angle = dragon.heartSide === "left"
-                        ? Math.PI - t * Math.PI
-                        : t * Math.PI;
-                    let hx = 16 * Math.pow(Math.sin(angle), 3);
-                    let hy = -13 * Math.cos(angle) + 5 * Math.cos(2 * angle) + 2 * Math.cos(3 * angle) + Math.cos(4 * angle);
-                    hx *= 7.5;
-                    hy *= 7.5;
-                    hx += dragon.heartSide === "left" ? -30 : 30;
-                    let eBody = dragon.elems[i];
-                    eBody.x = e.x + hx;
-                    eBody.y = e.y + hy;
-                    let a = Math.atan2(eBody.y - e.y, eBody.x - e.x);
-                    let scaleFactor = 0.22;
-                    const s = ((162 + 4 * (1 - i)) / 50) * scaleFactor;
-                    eBody.use.setAttributeNS(
-                        null,
-                        "transform",
-                        `translate(${eBody.x},${eBody.y}) rotate(${(180 / Math.PI) * a}) scale(${s},${s})`
-                    );
-                }
-                continue;
-            }
-
-            // --- Обычное движение ---
+            // Плавно меняем угол направления к цели
             const targetAngle = Math.atan2(dragon.target.y - e.y, dragon.target.x - e.x);
             let da = targetAngle - dragon.angle;
             while (da > Math.PI) da -= Math.PI * 2;
             while (da < -Math.PI) da += Math.PI * 2;
             dragon.angle += da * 0.03;
 
+            // Волновое смещение
             dragon.wavePhase += 0.13 + 0.03 * d;
             const waveRadius = 28 + 8 * Math.sin(performance.now() / 900 + d * 2);
 
+            // Новая позиция головы
             e.x += Math.cos(dragon.angle) * dragon.speed * 1.6 + Math.cos(dragon.angle + Math.PI / 2) * Math.sin(dragon.wavePhase) * waveRadius * 0.07;
             e.y += Math.sin(dragon.angle) * dragon.speed * 1.6 + Math.sin(dragon.angle + Math.PI / 2) * Math.sin(dragon.wavePhase) * waveRadius * 0.07;
 
+            // Если голова близко к цели — выбираем новую цель (с притяжением к центру)
             const dist = Math.hypot(e.x - dragon.target.x, e.y - dragon.target.y);
             if (dist < 120) {
                 let tries = 0;
@@ -390,10 +231,12 @@ else {
                 dragon.target = { x: nx, y: ny };
             }
 
+            // Ограничиваем в пределах экрана
             const margin = 30;
             e.x = Math.max(margin, Math.min(width - margin, e.x));
             e.y = Math.max(margin, Math.min(height - margin, e.y));
 
+            // Анимация тела
             for (let i = 1; i < N; i++) {
                 let e = dragon.elems[i];
                 let ep = dragon.elems[i - 1];
