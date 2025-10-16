@@ -153,7 +153,7 @@ if (isMobileOrTablet()) {
 // --- Десктоп: 5 волнистых драконов ---
 else {
     const dragons = [];
-    for (let d = 0; d < 2; d++) {
+    for (let d = 0; d < 1; d++) {
         const elems = [];
         const startX = Math.random() * (width - 100) + 50;
         const startY = Math.random() * (height - 100) + 50;
@@ -170,7 +170,7 @@ else {
             angle: Math.random() * Math.PI * 2
         });
     }
-    for (let d = 0; d < 2; d++) {
+    for (let d = 0; d < 1; d++) {
         for (let i = 1; i < N; i++) {
             let useType = "Espina";
             if (i === 1) useType = "Cabeza";
@@ -232,7 +232,7 @@ else {
             }
 
             // Ограничиваем в пределах экрана
-            const margin = 30;
+            const margin = 10;
             e.x = Math.max(margin, Math.min(width - margin, e.x));
             e.y = Math.max(margin, Math.min(height - margin, e.y));
 
@@ -244,7 +244,7 @@ else {
                 e.x += (ep.x - e.x + (Math.cos(a) * (100 - i)) / 5) / 4;
                 e.y += (ep.y - e.y + (Math.sin(a) * (100 - i)) / 5) / 4;
                 let scaleFactor = 0.18;
-                const s = ((162 + 4 * (1 - i)) / 35) * scaleFactor;
+                const s = ((162 + 4 * (1 - i)) / 40) * scaleFactor;
                 e.use.setAttributeNS(
                     null,
                     "transform",
