@@ -5,8 +5,8 @@ const xmlns = "http://www.w3.org/2000/svg";
 const xlinkns = "http://www.w3.org/1999/xlink";
 
 // --- Универсальные параметры ---
-const N = 24;
-const dragonColors = ['#09ff00', '#ff2222', '#2299ff', '#ffbb00', '#bb00ff'];
+const N = 25;
+const dragonColors = ['#ffffffff', '#ff2222', '#2299ff', '#ffbb00', '#bb00ff'];
 
 // --- Размеры ---
 let width, height;
@@ -153,7 +153,7 @@ if (isMobileOrTablet()) {
 // --- Десктоп: 5 волнистых драконов ---
 else {
     const dragons = [];
-    for (let d = 0; d < 5; d++) {
+    for (let d = 0; d < 2; d++) {
         const elems = [];
         const startX = Math.random() * (width - 100) + 50;
         const startY = Math.random() * (height - 100) + 50;
@@ -170,7 +170,7 @@ else {
             angle: Math.random() * Math.PI * 2
         });
     }
-    for (let d = 0; d < 5; d++) {
+    for (let d = 0; d < 2; d++) {
         for (let i = 1; i < N; i++) {
             let useType = "Espina";
             if (i === 1) useType = "Cabeza";
@@ -241,10 +241,10 @@ else {
                 let e = dragon.elems[i];
                 let ep = dragon.elems[i - 1];
                 const a = Math.atan2(e.y - ep.y, e.x - ep.x);
-                e.x += (ep.x - e.x + (Math.cos(a) * (100 - i)) / 5) / 2.5;
-                e.y += (ep.y - e.y + (Math.sin(a) * (100 - i)) / 5) / 2.5;
+                e.x += (ep.x - e.x + (Math.cos(a) * (100 - i)) / 5) / 4;
+                e.y += (ep.y - e.y + (Math.sin(a) * (100 - i)) / 5) / 4;
                 let scaleFactor = 0.18;
-                const s = ((162 + 4 * (1 - i)) / 50) * scaleFactor;
+                const s = ((162 + 4 * (1 - i)) / 35) * scaleFactor;
                 e.use.setAttributeNS(
                     null,
                     "transform",
