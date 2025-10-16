@@ -5,7 +5,7 @@ const xmlns = "http://www.w3.org/2000/svg";
 const xlinkns = "http://www.w3.org/1999/xlink";
 
 // --- Универсальные параметры ---
-const N = 25;
+const N = 30;
 const dragonColors = ['#ffffffff', '#ff2222', '#2299ff', '#ffbb00', '#bb00ff'];
 
 // --- Размеры ---
@@ -139,7 +139,7 @@ if (isMobileOrTablet()) {
             e.x += (ep.x - e.x + (Math.cos(a) * (100 - i)) / 5) / 2.5;
             e.y += (ep.y - e.y + (Math.sin(a) * (100 - i)) / 5) / 2.5;
             let scaleFactor = 0.13;
-            const s = ((162 + 4 * (1 - i)) / 50) * scaleFactor;
+            const s = ((162 + 4 * (1 - i)) / 60) * scaleFactor;
             e.use.setAttributeNS(
                 null,
                 "transform",
@@ -184,11 +184,11 @@ else {
     }
 
     let lastFrame = 0;
-    const FPS = 9999;
+    const FPS = 30;
 
     const run = (now) => {
         requestAnimationFrame(run);
-        if (now - lastFrame < 1000 / FPS) return;
+        if (now - lastFrame < 1 / FPS) return;
         lastFrame = now;
 
         for (let d = 0; d < 5; d++) {
@@ -207,8 +207,8 @@ else {
             const waveRadius = 28 + 8 * Math.sin(performance.now() / 900 + d * 2);
 
             // Новая позиция головы
-            e.x += Math.cos(dragon.angle) * dragon.speed * 1.6 + Math.cos(dragon.angle + Math.PI / 2) * Math.sin(dragon.wavePhase) * waveRadius * 0.07;
-            e.y += Math.sin(dragon.angle) * dragon.speed * 1.6 + Math.sin(dragon.angle + Math.PI / 2) * Math.sin(dragon.wavePhase) * waveRadius * 0.07;
+            e.x += Math.cos(dragon.angle) * dragon.speed * 1.6 + Math.cos(dragon.angle + Math.PI / 2) * Math.sin(dragon.wavePhase) * waveRadius * 0.05;
+            e.y += Math.sin(dragon.angle) * dragon.speed * 1.6 + Math.sin(dragon.angle + Math.PI / 2) * Math.sin(dragon.wavePhase) * waveRadius * 0.05;
 
             // Если голова близко к цели — выбираем новую цель (с притяжением к центру)
             const dist = Math.hypot(e.x - dragon.target.x, e.y - dragon.target.y);
@@ -232,7 +232,7 @@ else {
             }
 
             // Ограничиваем в пределах экрана
-            const margin = 10;
+            const margin = 5;
             e.x = Math.max(margin, Math.min(width - margin, e.x));
             e.y = Math.max(margin, Math.min(height - margin, e.y));
 
@@ -241,10 +241,10 @@ else {
                 let e = dragon.elems[i];
                 let ep = dragon.elems[i - 1];
                 const a = Math.atan2(e.y - ep.y, e.x - ep.x);
-                e.x += (ep.x - e.x + (Math.cos(a) * (100 - i)) / 5) / 4;
-                e.y += (ep.y - e.y + (Math.sin(a) * (100 - i)) / 5) / 4;
+                e.x += (ep.x - e.x + (Math.cos(a) * (90 - i)) / 5) / 4;
+                e.y += (ep.y - e.y + (Math.sin(a) * (90 - i)) / 5) / 4;
                 let scaleFactor = 0.18;
-                const s = ((162 + 4 * (1 - i)) / 25) * scaleFactor;
+                const s = ((162 + 4 * (1 - i)) / 20) * scaleFactor;
                 e.use.setAttributeNS(
                     null,
                     "transform",
