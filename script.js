@@ -244,7 +244,7 @@ else {
                 e.x += (ep.x - e.x + (Math.cos(a) * (100 - i)) / 5) / 4;
                 e.y += (ep.y - e.y + (Math.sin(a) * (100 - i)) / 5) / 4;
                 let scaleFactor = 0.18;
-                const s = ((162 + 4 * (1 - i)) / 40) * scaleFactor;
+                const s = ((162 + 4 * (1 - i)) / 25) * scaleFactor;
                 e.use.setAttributeNS(
                     null,
                     "transform",
